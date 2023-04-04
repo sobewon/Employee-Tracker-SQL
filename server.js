@@ -24,6 +24,7 @@ const db = mysql.createConnection(
 //test to select all from employee
 db.query('SELECT * FROM employee', (error, results) => {
     if (error) throw error;
+    console.log(`\n`)
     console.table(results);
 });
 
@@ -46,44 +47,47 @@ async function promptUser() {
         ])
         switch (answer.option) {
             case 'View All Employees':
-                console.log('code for view all empl')
+                console.log('\ncode for view all empl')
                 db.query('SELECT * FROM employee', (error, results) => {
                     if (error) throw error;
+                    console.log('\n');
                     console.table(results);
                 });
                 break;
             case 'Add Employee':
-                console.log('code for adding empl')
+                console.log('\ncode for adding empl')
                 break;
             case 'Update Employee Role':
-                console.log('code for updating emp role')
+                console.log('\ncode for updating emp role')
                 break;
             case 'View All Roles':
-                console.log('code for view allrolls')
+                console.log('\ncode for view allrolls')
                 db.query('SELECT * FROM role', (error, results) => {
                     if (error) throw error;
+                    console.log('\n');
                     console.table(results);
                 });
                 break
             case 'Add Role':
-                console.log('code for adding role')
+                console.log('\ncode for adding role')
                 break;
             case 'View All Departments':
-                console.log('code for viewing all Departments')
+                console.log('\ncode for viewing all Departments')
                 db.query('SELECT * FROM department', (error, results) => {
                     if (error) throw error;
+                    console.log('\n');
                     console.table(results);
                 });
                 break;
             case 'Add Department':
-                console.log('code for adding Departments')
+                console.log('\ncode for adding Departments')
                 break;
             case 'Exit':
                 // Exit the loop and the program
-                console.log('Exiting program');
+                console.log('\nExiting program');
                 return process.exit(0);
             default:
-                console.log('Invalid option');
+                console.log('\nInvalid option\n');
                 break;
         }
     }
