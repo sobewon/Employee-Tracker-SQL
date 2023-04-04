@@ -40,22 +40,7 @@ async function promptUser() {
             });
         });
 
-        const [roles, employees] = await Promise.all([
-            //  list of roles
-            new Promise((resolve, reject) => {
-                db.query('SELECT id, title FROM role', (error, roles) => {
-                    if (error) reject(error);
-                    resolve(roles);
-                });
-            }),
-            //  list of employees names
-            new Promise((resolve, reject) => {
-                db.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', (error, employees) => {
-                    if (error) reject(error);
-                    resolve(employees);
-                    });
-            })
-        ]);
+
 
         const answer = await inquirer.prompt([
             {
@@ -83,58 +68,68 @@ async function promptUser() {
                     console.log('Error:', error);
                 }
                 break;
-                case 'Add Employee':
-                    try {
-                        console.log('\nAdding Employee\n');
-                        const employee = await inquirer.prompt([
-                            {
-                                type: 'input',
-                                name: 'first_name',
-                                message: 'Enter the first name of the employee:'
-                            },
-                            {
-                                type: 'input',
-                                name: 'last_name',
-                                message: 'Enter the last name of the employee:'
-                            },
-                            {
-                                type: 'list',
-                                name: 'role_id',
-                                message: 'What is the role of the employee:',
-                                choices: roles.map(role => ({ name: role.title, value: role.id })),
-                            },
-                            {
-                                type: 'list',
-                                name: 'manager_id',
-                                message: 'Who is the Employee\'s manager?',
-                                choices: [
-                                    { name: 'None', value: null }, // Add a "None" option to allow employees without managers
-                                    ...employees.map(employee => ({ name: employee.name, value: employee.id }))
-                                ],
-                            }
-                        ]);
-                      // insert new emp
-                        await new Promise((resolve, reject) => {
-                            const dbQuery = `
-                                INSERT INTO employee (first_name, last_name, role_id, manager_id)
-                                VALUES (?, ?, ?, ?)
-                                `;
-                            db.query(dbQuery, [employee.first_name, employee.last_name, employee.role_id, employee.manager_id], (error, result) => {
-                                if (error) reject(error);
-                                console.log('\nEmployee added successfully!\n');
-                                resolve(result);
-                            });
+            case 'Add Employee':
+                try {
+                    console.log('\nAdding Employee\n');
+                    const employee = await inquirer.prompt([
+                        {
+                            type: 'input',
+                            name: 'first_name',
+                            message: 'Enter the first name of the employee:'
+                        },
+                        {
+                            type: 'input',
+                            name: 'last_name',
+                            message: 'Enter the last name of the employee:'
+                        },
+                        {
+                            type: 'list',
+                            name: 'role_id',
+                            message: 'What is the role of the employee:',
+                            choices: roles.map(role => ({ name: role.title, value: role.id })),
+                        },
+                        {
+                            type: 'list',
+                            name: 'manager_id',
+                            message: 'Who is the Employee\'s manager?',
+                            choices: [
+                                { name: 'None', value: null }, // Add a "None" option to allow employees without managers
+                                ...employees.map(employee => ({ name: employee.name, value: employee.id }))
+                            ],
+                        }
+                    ]);
+                    // insert new emp
+                    await new Promise((resolve, reject) => {
+                        const dbQuery = `
+                            INSERT INTO employee (first_name, last_name, role_id, manager_id)
+                            VALUES (?, ?, ?, ?)
+                            `;
+                        db.query(dbQuery, [employee.first_name, employee.last_name, employee.role_id, employee.manager_id], (error, result) => {
+                            if (error) reject(error);
+                            console.log('\nEmployee added successfully!\n');
+                            resolve(result);
                         });
-                    } catch (error) {
-                        console.error('Error:', error);
-                    }
-                    break;
-
-
+                    });
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+                break;
 
             case 'Update Employee Role':
                 console.log('\nUpdating Employee Role\n')
                 try {
+                    const employees = await new Promise((resolve, reject) => {
+                        db.query('SELECT id, first_name, last_name FROM employee', (error, employees) => {
+                            if (error) reject(error);
+                            resolve(employees);
+                        });
+                    });
+                    const roles = await new Promise((resolve, reject) => {
+                        db.query('SELECT id, title FROM role', (error, roles) => {
+                            if (error) reject(error);
+                            resolve(roles);
+                        });
+                    });
                     const updateEmployee = await inquirer.prompt([
                         {
                             type: 'list',
