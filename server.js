@@ -39,7 +39,24 @@ async function promptUser() {
                 resolve(employeeList);
             });
         });
-        
+
+        const [roles, employees] = await Promise.all([
+            //  list of roles
+            new Promise((resolve, reject) => {
+                db.query('SELECT id, title FROM role', (error, roles) => {
+                    if (error) reject(error);
+                    resolve(roles);
+                });
+            }),
+            //  list of employees names
+            new Promise((resolve, reject) => {
+                db.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', (error, employees) => {
+                    if (error) reject(error);
+                    resolve(employees);
+                    });
+            })
+        ]);
+
         const answer = await inquirer.prompt([
             {
             type: 'list',
@@ -69,22 +86,6 @@ async function promptUser() {
                 case 'Add Employee':
                     try {
                         console.log('\nAdding Employee\n');
-                        const [roles, employees] = await Promise.all([
-                            // Get the list of roles
-                            new Promise((resolve, reject) => {
-                                db.query('SELECT id, title FROM role', (error, roles) => {
-                                    if (error) reject(error);
-                                    resolve(roles);
-                                });
-                            }),
-                            // Get the list of employees
-                            new Promise((resolve, reject) => {
-                                db.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', (error, employees) => {
-                                    if (error) reject(error);
-                                    resolve(employees);
-                                    });
-                            })
-                        ]);
                         const employee = await inquirer.prompt([
                             {
                                 type: 'input',
@@ -128,13 +129,38 @@ async function promptUser() {
                         console.error('Error:', error);
                     }
                     break;
+
+
+
             case 'Update Employee Role':
                 console.log('\nUpdating Employee Role\n')
                 try {
-                    //
+                    const updateEmployee = await inquirer.prompt([
+                        {
+                            type: 'list',
+                            name: 'employee',
+                            message: 'Which employee do you want to update?',
+                            choices: employees.map(employee => ({ name: `${employee.first_name} ${employee.last_name}`, value: employee.id }))
+                        },
+                        {
+                            type: 'list',
+                            name: 'role',
+                            message: 'Which role do you want to assign to the employee?',
+                            choices: roles.map(role => ({ name: role.title, value: role.id }))
+                        }
+                    ])
+                    await new Promise((resolve, reject) => {
+                        const dbQuery = `UPDATE employee SET role_id = ? WHERE id = ?`;
+                        db.query(dbQuery, [updateEmployee.role, updateEmployee.employee], (error, result) => {
+                            if (error) reject(error);
+                            console.log(`\nSuccessfully updated employee's role!\n`);
+                            resolve(result);
+                        });
+                    });
                 }catch {error} {
                     console.error('Next')
                 }
+
                 break;
             case 'View All Roles': //fin
                 console.log('\ncode for view allrolls')
