@@ -32,6 +32,14 @@ db.query('SELECT * FROM employee', (error, results) => {
 async function promptUser() {
     let isRun = true;
     while (isRun) {
+        //get full list of employees
+        const employeeList = await new Promise((resolve, reject) => {
+            db.query('SELECT * FROM employee', (error, employeeList) => {
+                if (error) reject(error);
+                resolve(employeeList);
+            });
+        });
+        
         const answer = await inquirer.prompt([
             {
             type: 'list',
@@ -51,62 +59,82 @@ async function promptUser() {
             case 'View All Employees': //finished
                 console.log('\ncode for view all empl')
                 try {
-                    const results = await new Promise((resolve, reject) => {
-                        db.query('SELECT * FROM employee', (error, results) => {
-                            if (error) reject(error);
-                            resolve(results);
-                        });
-                    });
                     console.log('\n Printing Table: \n');
-                    console.table(results);
+                    console.table(employeeList);
                     console.log(`\n`);
                 } catch (error) {
                     console.log('Error:', error);
                 }
                 break;
-            case 'Add Employee': //fin
-                try{
-                    console.log('\nAdding Employee\n')
-                    const employee = await inquirer.prompt([
-                        {
-                            type: 'input',
-                            name: 'first_name',
-                            message: 'Enter the first name of the employee:'
-                        },
-                        {
-                            type: 'input',
-                            name: 'last_name',
-                            message: 'Enter the last name of the employee:'
-                        },
-                        {
-                            type: 'input',
-                            name: 'role_id',
-                            message: 'Enter the role ID of the employee:'
-                        },
-                        {
-                            type: 'input',
-                            name: 'manager_id',
-                            message: 'Enter the manager ID of the employee:'
-                        }
-                    ]);
-                    // insert new emp
-                    await new Promise((resolve, reject) => {
-                        const dbQuery = `
-                        INSERT INTO employee (first_name, last_name, role_id, manager_id)
-                        VALUES (?, ?, ?, ?)
-                        `;
-                        db.query(dbQuery, [employee.first_name, employee.last_name, employee.role_id, employee.manager_id], (error, result) => {
-                            if (error) throw error;
-                            console.log('\nEmployee added successfully!\n');
-                            resolve(result);
+                case 'Add Employee':
+                    try {
+                        console.log('\nAdding Employee\n');
+                        const [roles, employees] = await Promise.all([
+                            // Get the list of roles
+                            new Promise((resolve, reject) => {
+                                db.query('SELECT id, title FROM role', (error, roles) => {
+                                    if (error) reject(error);
+                                    resolve(roles);
+                                });
+                            }),
+                            // Get the list of employees
+                            new Promise((resolve, reject) => {
+                                db.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', (error, employees) => {
+                                    if (error) reject(error);
+                                    resolve(employees);
+                                    });
+                            })
+                        ]);
+                        const employee = await inquirer.prompt([
+                            {
+                                type: 'input',
+                                name: 'first_name',
+                                message: 'Enter the first name of the employee:'
+                            },
+                            {
+                                type: 'input',
+                                name: 'last_name',
+                                message: 'Enter the last name of the employee:'
+                            },
+                            {
+                                type: 'list',
+                                name: 'role_id',
+                                message: 'What is the role of the employee:',
+                                choices: roles.map(role => ({ name: role.title, value: role.id })),
+                            },
+                            {
+                                type: 'list',
+                                name: 'manager_id',
+                                message: 'Who is the Employee\'s manager?',
+                                choices: [
+                                    { name: 'None', value: null }, // Add a "None" option to allow employees without managers
+                                    ...employees.map(employee => ({ name: employee.name, value: employee.id }))
+                                ],
+                            }
+                        ]);
+                      // insert new emp
+                        await new Promise((resolve, reject) => {
+                            const dbQuery = `
+                                INSERT INTO employee (first_name, last_name, role_id, manager_id)
+                                VALUES (?, ?, ?, ?)
+                                `;
+                            db.query(dbQuery, [employee.first_name, employee.last_name, employee.role_id, employee.manager_id], (error, result) => {
+                                if (error) reject(error);
+                                console.log('\nEmployee added successfully!\n');
+                                resolve(result);
+                            });
                         });
-                    })
-                } catch {error} {
+                    } catch (error) {
+                        console.error('Error:', error);
+                    }
+                    break;
+            case 'Update Employee Role':
+                console.log('\nUpdating Employee Role\n')
+                try {
+                    //
+                }catch {error} {
                     console.error('Next')
                 }
-                break;
-            case 'Update Employee Role':
-                console.log('\ncode for updating emp role')
                 break;
             case 'View All Roles': //fin
                 console.log('\ncode for view allrolls')
