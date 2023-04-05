@@ -19,6 +19,10 @@ I wanted to make it easier to see employees in my company.
 
 https://github.com/sobewon/Employee-Tracker-SQL
 
+## Link to Test Video
+
+https://youtu.be/uQrtqh-qRTw
+
 ## Thank you for viewing!
 
 If you have any questions, please feel free to contact me at https://github.com/sobewon
