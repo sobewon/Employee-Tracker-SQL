@@ -34,13 +34,23 @@ async function promptUser() {
     while (isRun) {
         //get full list of employees
         const employeeList = await new Promise((resolve, reject) => {
-            db.query('SELECT * FROM employee', (error, employeeList) => {
+            db.query(`SELECT employee.id AS 'ID#', employee.first_name AS 'First Name', employee.last_name AS 'Last Name', role.title, role.salary, manager.last_name AS 'Manager' FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN employee manager ON employee.manager_id = manager.id`, (error, employeeList) => {
                 if (error) reject(error);
                 resolve(employeeList);
             });
         });
-
-
+        const employees = await new Promise((resolve, reject) => {
+            db.query(`SELECT CONCAT(first_name, ' ', last_name) AS name, id FROM employee`, (error, employees) => {
+                if (error) reject(error);
+                resolve(employees);
+            });
+        });
+        const roles = await new Promise((resolve, reject) => {
+            db.query(`SELECT title, id FROM role`, (error, roles) => {
+                if (error) reject(error);
+                resolve(roles);
+            });
+        });
 
         const answer = await inquirer.prompt([
             {
@@ -59,7 +69,7 @@ async function promptUser() {
         ])
         switch (answer.option) {
             case 'View All Employees': //finished
-                console.log('\ncode for view all empl')
+                console.log('\nList of all Employees')
                 try {
                     console.log('\n Printing Table: \n');
                     console.table(employeeList);
